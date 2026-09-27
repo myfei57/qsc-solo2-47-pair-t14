@@ -17,6 +17,7 @@ def test_view_aggregates_every_subsystem(services):
         "glue",
         "cal",
         "reel",
+        "schedule",
         "broke",
         "water",
     }

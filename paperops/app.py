@@ -14,6 +14,7 @@ from .event import EventBus
 from .glue import GlueService
 from .press import PressService
 from .reel import ReelService
+from .schedule import ScheduleService
 from .state import StateService
 from .steam import SteamService
 from .store import Journal
@@ -40,6 +41,7 @@ class Services:
     glue: GlueService
     cal: CalService
     reel: ReelService
+    schedule: ScheduleService
     broke: BrokeService
     water: WaterService
     audit: AuditService
@@ -54,6 +56,7 @@ class Services:
         self.glue.reload()
         self.cal.reload()
         self.reel.reload()
+        self.schedule.reload()
         self.broke.reload()
         self.water.reload()
 
@@ -77,6 +80,7 @@ def build_services(config: Config) -> Services:
     broke = BrokeService(journal, bus, clock, batches)
     water = WaterService(journal, bus, clock, generations, confirmations)
     audit = AuditService(AuditLog(config.data_dir), bus, clock)
+    schedule = ScheduleService(journal, bus, clock, reel, cal, broke, audit)
     state = StateService(
         journal,
         bus,
@@ -90,6 +94,7 @@ def build_services(config: Config) -> Services:
             "glue": glue,
             "cal": cal,
             "reel": reel,
+            "schedule": schedule,
             "broke": broke,
             "water": water,
         },
@@ -117,6 +122,7 @@ def build_services(config: Config) -> Services:
         glue=glue,
         cal=cal,
         reel=reel,
+        schedule=schedule,
         broke=broke,
         water=water,
         audit=audit,
@@ -127,6 +133,7 @@ def build_services(config: Config) -> Services:
     glue.wire()
     water.wire()
     audit.wire()
+    schedule.wire()
     state.wire()
     services.console = Console(services)
     return services

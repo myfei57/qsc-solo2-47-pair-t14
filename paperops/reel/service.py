@@ -121,6 +121,24 @@ class ReelService:
         """Hand a web break to the broke handling procedure."""
         return broke.trip(reason)
 
+    def abort_change(self) -> dict[str, Any]:
+        """Tear down a transfer before the new spool is turned up.
+
+        Only the scheduling layer reaches this, and only for a job that has not
+        closed new_spool yet, so no spool row exists to undo.
+        """
+        if self._procedure.is_done("new_spool"):
+            raise PreGateError("reel: the new spool is already turned up")
+        self._procedure.reset()
+        self._retracted = False
+        state = dict(self._procedure.state())
+        state["reason"] = "aborted"
+        state["tick"] = self._clock.tick
+        with self._journal.transaction("reel-abort") as batch:
+            self._journal.append(keys.REEL_PROCEDURE, state, batch)
+        self._bus.publish(topics.TOPIC_REEL_PROCEDURE, state["next"])
+        return state
+
     def reload(self) -> ReelView:
         stored = self._journal.read(keys.REEL_PROCEDURE)
         if stored is not None:

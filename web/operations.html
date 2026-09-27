@@ -63,6 +63,21 @@
     <button onclick="post('/api/reel/bite', {})">咬纸</button>
   </section>
   <section>
+    <h1>换卷排程</h1>
+    <label>空轴号 <input id="schShaft" value="S-2048"></label>
+    <label>目标轴径 <input id="schTarget" value="1000"></label>
+    <label>实测轴径 <input id="schDiameter" value="980"></label>
+    <button onclick="post('/api/schedule/enlist', {spool_id: v('schShaft'), target: num('schTarget')})">空轴排队</button>
+    <button onclick="post('/api/schedule/mount', {})">队头上机</button>
+    <button onclick="post('/api/schedule/measure', {diameter: num('schDiameter')})">上报轴径</button>
+    <button onclick="post('/api/schedule/trigger', {reason: 'manual turn up'})">手动触发换卷</button>
+    <button onclick="post('/api/schedule/advance', {})">推进一步</button>
+    <button onclick="post('/api/schedule/cancel', {})">取消本次换卷</button>
+    <button onclick="post('/api/schedule/defer', {})">延后（断纸）</button>
+    <button onclick="post('/api/schedule/resume', {})">损纸处理完接回</button>
+    <button onclick="loadSchedule()">刷新排程状态</button>
+  </section>
+  <section>
     <h1>损纸处理</h1>
     <label>损纸量 <input id="volume" value="12"></label>
     <label>批次 <input id="batch" value="B-001"></label>
@@ -77,10 +92,15 @@
   </section>
   <script>
     const num = (id) => Number(document.getElementById(id).value);
+    const v = (id) => document.getElementById(id).value;
     const out = document.getElementById("out");
     async function post(path, body) {
       const response = await fetch(path, {method: "POST", body: JSON.stringify(body)});
       out.textContent = path + " -> " + response.status + "\n" + JSON.stringify(await response.json(), null, 2);
+    }
+    async function loadSchedule() {
+      const response = await fetch("/api/schedule/state");
+      out.textContent = "/api/schedule/state -> " + response.status + "\n" + JSON.stringify(await response.json(), null, 2);
     }
   </script>
 </body>

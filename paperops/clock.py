@@ -49,6 +49,10 @@ class IdSequence:
         self._issued += 1
         return format_id(self._prefix, self._issued, self._width)
 
+    @property
+    def issued(self) -> int:
+        return self._issued
+
     def restore(self, issued: int) -> None:
         """Keep the counter ahead of identifiers recovered from a replayed log."""
         self._issued = max(self._issued, issued)

@@ -231,6 +231,59 @@ def reel_break(console: Any, request: Request) -> Response:
     )
 
 
+def schedule_enlist(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(
+        console.services.schedule.enlist(body["spool_id"], float(body.get("target", 0.0)))
+    )
+
+
+def schedule_reorder(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(
+        console.services.schedule.reorder(body["spool_id"], int(body.get("position", 0)))
+    )
+
+
+def schedule_mount(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(console.services.schedule.mount(body.get("spool_id", "")))
+
+
+def schedule_measure(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(
+        console.services.schedule.measure(
+            body.get("spool_id", ""),
+            float(body["diameter"]),
+            float(body.get("target", 0.0)),
+        )
+    )
+
+
+def schedule_trigger(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(
+        console.services.schedule.trigger(body.get("spool_id", ""), body.get("reason", "manual turn up"))
+    )
+
+
+def schedule_advance(console: Any, request: Request) -> Response:
+    return json_response(console.services.schedule.advance(request.body().get("job_id", "")))
+
+
+def schedule_cancel(console: Any, request: Request) -> Response:
+    return json_response(console.services.schedule.cancel(request.body().get("job_id", "")))
+
+
+def schedule_defer(console: Any, request: Request) -> Response:
+    return json_response(console.services.schedule.defer(request.body().get("job_id", "")))
+
+
+def schedule_resume(console: Any, request: Request) -> Response:
+    return json_response(console.services.schedule.resume(request.body().get("job_id", "")))
+
+
 def broke_trip(console: Any, request: Request) -> Response:
     return json_response(console.services.broke.trip(request.body().get("reason", "web break")))
 

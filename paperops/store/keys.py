@@ -24,6 +24,8 @@ REEL_PROCEDURE = "reel/procedure"
 REEL_SPOOL = "reel/spool"
 REEL_RETRACT = "reel/retract"
 
+SCHEDULE_STATE = "schedule/state"
+
 BROKE_PROCEDURE = "broke/procedure"
 BROKE_LATCH = "broke/latch"
 

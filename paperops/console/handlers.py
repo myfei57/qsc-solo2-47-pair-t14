@@ -334,6 +334,24 @@ def reel_geometry(console: Any, request: Request) -> Response:
     )
 
 
+def schedule_state(console: Any, request: Request) -> Response:
+    return json_response(console.services.schedule.view().to_dict())
+
+
+def schedule_spool_trace(console: Any, request: Request) -> Response:
+    spool_id = request.param("spool_id", "") or ""
+    return json_response(
+        {"spool_id": spool_id, "events": console.services.schedule.spool_trace(spool_id)}
+    )
+
+
+def schedule_job_trace(console: Any, request: Request) -> Response:
+    job_id = request.param("job_id", "") or ""
+    return json_response(
+        {"job_id": job_id, "events": console.services.schedule.job_trace(job_id)}
+    )
+
+
 def broke_state(console: Any, request: Request) -> Response:
     return json_response(console.services.broke.view().to_dict())
 

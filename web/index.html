@@ -41,6 +41,8 @@
       ["浓度报警", (s) => s.glue.alarm],
       ["压区闭合", (s) => s.cal.nip_closed],
       ["新轴投入", (s) => s.reel.spool_loaded],
+      ["换卷作业在途", (s) => s.schedule.job !== null],
+      ["换卷被断纸中断", (s) => s.schedule.broke_latched],
       ["损纸闩锁", (s) => s.broke.latched],
       ["水份映射就绪", (s) => s.water.generation > 0]
     ];
