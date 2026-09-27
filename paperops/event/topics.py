@@ -22,6 +22,13 @@ TOPIC_CAL_SPEED = "cal.speed.changed"
 
 TOPIC_REEL_PROCEDURE = "reel.procedure.changed"
 TOPIC_REEL_SPOOL = "reel.spool.changed"
+TOPIC_REEL_RETRACT = "reel.retract.changed"
+
+TOPIC_SCHEDULE_CHANGE = "schedule.change.changed"
+TOPIC_SCHEDULE_SPOOL = "schedule.spool.changed"
+TOPIC_SCHEDULE_QUEUE = "schedule.queue.changed"
+TOPIC_SCHEDULE_INCIDENT = "schedule.incident.changed"
+TOPIC_SCHEDULE_CONFIG = "schedule.config.changed"
 
 TOPIC_BROKE_PROCEDURE = "broke.procedure.changed"
 TOPIC_BROKE_LATCH = "broke.latch.changed"
@@ -51,6 +58,12 @@ ALL_TOPICS: tuple[str, ...] = (
     TOPIC_CAL_SPEED,
     TOPIC_REEL_PROCEDURE,
     TOPIC_REEL_SPOOL,
+    TOPIC_REEL_RETRACT,
+    TOPIC_SCHEDULE_CHANGE,
+    TOPIC_SCHEDULE_SPOOL,
+    TOPIC_SCHEDULE_QUEUE,
+    TOPIC_SCHEDULE_INCIDENT,
+    TOPIC_SCHEDULE_CONFIG,
     TOPIC_BROKE_PROCEDURE,
     TOPIC_BROKE_LATCH,
     TOPIC_BROKE_HANDLED,

@@ -7,6 +7,7 @@ from .http import Response, error_response, html_response
 PAGE_NAMES: tuple[str, ...] = (
     "index.html",
     "operations.html",
+    "schedule.html",
     "curves.html",
     "audit.html",
 )

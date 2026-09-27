@@ -24,6 +24,28 @@ REEL_PROCEDURE = "reel/procedure"
 REEL_SPOOL = "reel/spool"
 REEL_RETRACT = "reel/retract"
 
+SCHEDULE_CONFIG = "schedule/config"
+SCHEDULE_QUEUE = "schedule/queue"
+SCHEDULE_SPOOL_PREFIX = "schedule/spool/"
+SCHEDULE_CHANGE_PREFIX = "schedule/change/"
+SCHEDULE_INCIDENT_PREFIX = "schedule/incident/"
+
+
+def schedule_spool_key(spool_id: str) -> str:
+    return SCHEDULE_SPOOL_PREFIX + spool_id
+
+
+def schedule_reading_key(spool_id: str) -> str:
+    return SCHEDULE_SPOOL_PREFIX + spool_id + "/reading"
+
+
+def schedule_change_key(change_id: str) -> str:
+    return SCHEDULE_CHANGE_PREFIX + change_id
+
+
+def schedule_incident_key(incident_id: str) -> str:
+    return SCHEDULE_INCIDENT_PREFIX + incident_id
+
 BROKE_PROCEDURE = "broke/procedure"
 BROKE_LATCH = "broke/latch"
 

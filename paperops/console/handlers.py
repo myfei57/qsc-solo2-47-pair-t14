@@ -318,6 +318,15 @@ def reel_state(console: Any, request: Request) -> Response:
     return json_response(console.services.reel.view().to_dict())
 
 
+def schedule_state(console: Any, request: Request) -> Response:
+    return json_response(console.services.schedule.view().to_dict())
+
+
+def schedule_timeline(console: Any, request: Request) -> Response:
+    spool_id = request.param("spool_id") or console.services.schedule.winding_id()
+    return json_response({"spool_id": spool_id, "events": console.services.schedule.timeline(spool_id)})
+
+
 def reel_geometry(console: Any, request: Request) -> Response:
     reel = console.services.reel
     core = request.number("core", 150.0)

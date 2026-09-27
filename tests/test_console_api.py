@@ -55,6 +55,7 @@ def test_pages_are_named_and_served(console):
     assert set(page_names()) == {
         "index.html",
         "operations.html",
+        "schedule.html",
         "curves.html",
         "audit.html",
     }

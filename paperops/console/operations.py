@@ -231,6 +231,74 @@ def reel_break(console: Any, request: Request) -> Response:
     )
 
 
+def schedule_mount(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(
+        console.services.schedule.mount_initial(
+            body["spool_id"], float(body.get("target_diameter", 1200.0))
+        )
+    )
+
+
+def schedule_enqueue(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(
+        console.services.schedule.enqueue(
+            body["spool_id"], float(body.get("target_diameter", 1200.0))
+        )
+    )
+
+
+def schedule_diameter(console: Any, request: Request) -> Response:
+    body = request.body()
+    spool_id = body.get("spool_id") or console.services.schedule.winding_id()
+    return json_response(
+        console.services.schedule.read_diameter(spool_id, float(body["diameter"]))
+    )
+
+
+def schedule_request(console: Any, request: Request) -> Response:
+    body = request.body()
+    spool_id = body.get("spool_id") or console.services.schedule.winding_id()
+    return json_response(
+        console.services.schedule.request_change(spool_id, body.get("reason", "operator"))
+    )
+
+
+def schedule_start(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(console.services.schedule.start_change(body["change_id"]))
+
+
+def schedule_step(console: Any, request: Request) -> Response:
+    return json_response(console.services.schedule.complete_stage())
+
+
+def schedule_cancel(console: Any, request: Request) -> Response:
+    return json_response(
+        console.services.schedule.cancel_change(request.body()["change_id"])
+    )
+
+
+def schedule_break(console: Any, request: Request) -> Response:
+    body = request.body()
+    return json_response(
+        console.services.schedule.report_break(body.get("reason", "web break"))
+    )
+
+
+def schedule_reorder(console: Any, request: Request) -> Response:
+    return json_response(
+        console.services.schedule.reorder_queue(list(request.body()["ordered_ids"]))
+    )
+
+
+def schedule_mode(console: Any, request: Request) -> Response:
+    return json_response(
+        console.services.schedule.set_mode(request.body().get("mode", "auto"))
+    )
+
+
 def broke_trip(console: Any, request: Request) -> Response:
     return json_response(console.services.broke.trip(request.body().get("reason", "web break")))
 

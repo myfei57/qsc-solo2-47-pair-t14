@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <title>换卷排程</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; background: #0f1720; color: #dfe7ef; }
+    h1 { font-size: 20px; margin: 0 0 16px; }
+    h2 { font-size: 14px; margin: 0 0 8px; color: #9fb3c8; }
+    nav a { color: #7fc4ff; margin-right: 14px; text-decoration: none; }
+    section { background: #18222e; border: 1px solid #26333f; border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+    button { background: #2b6cb0; color: #fff; border: 0; border-radius: 6px; padding: 6px 12px; margin: 3px; cursor: pointer; }
+    button.warn { background: #b05a2b; }
+    button.danger { background: #a83a3a; }
+    input { background: #101a24; color: #dfe7ef; border: 1px solid #33414f; border-radius: 4px; padding: 4px 6px; width: 100px; margin: 3px; }
+    pre { background: #101a24; padding: 10px; border-radius: 6px; font-size: 12px; }
+    label { color: #9fb3c8; font-size: 13px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #26333f; }
+    .tag { display: inline-block; border-radius: 4px; padding: 1px 8px; font-size: 12px; background: #26333f; }
+    .tag.active, .tag.winding, .tag.complete { background: #245c3f; }
+    .tag.held, .tag.pending_change { background: #8a5a1c; }
+    .tag.cancelled, .tag.full { background: #5c2f2f; }
+  </style>
+</head>
+<body>
+  <h1>换卷排程</h1>
+  <nav>
+    <a href="/">总览</a>
+    <a href="/operations.html">操作</a>
+    <a href="/schedule.html">排程</a>
+    <a href="/curves.html">曲线</a>
+    <a href="/audit.html">记录</a>
+  </nav>
+
+  <section>
+    <h2>轴登记与直径</h2>
+    <label>轴号 <input id="spool" value="S-101"></label>
+    <label>目标轴径 <input id="target" value="1200"></label>
+    <label>当前轴径 <input id="diam" value="0"></label>
+    <button onclick="mount()">上机初始轴</button>
+    <button onclick="enqueue()">空轴排队</button>
+    <button onclick="reading()">上报轴径</button>
+    <button onclick="requestChange()">手动请求换卷</button>
+  </section>
+
+  <section>
+    <h2>当前换卷</h2>
+    <div id="active">无</div>
+    <button onclick="step()">完成当前步骤</button>
+    <button class="warn" onclick="breakNow()">断纸（挂起当前换卷）</button>
+    <button class="danger" onclick="cancelActive()">取消当前换卷</button><br>
+    <label>取消用换卷单号 <input id="cancelId" placeholder="chg-xxxxxx"></label>
+    <button class="danger" onclick="cancelId()">取消指定单号</button>
+    <label>手动启动单号 <input id="startId" placeholder="chg-xxxxxx"></label>
+    <button onclick="startId()">手动启动</button>
+  </section>
+
+  <section>
+    <h2>损纸处理（断纸后顺序执行）</h2>
+    <label>损纸量 <input id="vol" value="12"></label>
+    <label>批次 <input id="batch" value="B-001"></label>
+    <button onclick="post('/api/broke/process', {volume: num('vol'), batch_id: document.getElementById('batch').value})">处理损纸</button>
+    <button onclick="post('/api/broke/reset', {})">闩锁复位</button>
+    <button onclick="post('/api/broke/takeover', {})">接纸接管（自动续上换卷）</button>
+  </section>
+
+  <section>
+    <h2>排队与模式</h2>
+    <button onclick="setMode('auto')">自动模式</button>
+    <button onclick="setMode('manual')">手动模式</button>
+    <label>新排队顺序（逗号分隔） <input id="order" style="width:300px" placeholder="S-104,S-103"></label>
+    <button onclick="reorder()">调整排队顺序</button>
+    <h2 style="margin-top:12px">等待上机的空轴</h2>
+    <table id="queue"><thead><tr><th>#</th><th>轴号</th><th>状态</th><th>目标轴径</th><th>预占换卷单</th></tr></thead><tbody></tbody></table>
+    <h2 style="margin-top:12px">排队中的换卷单</h2>
+    <table id="pending"><thead><tr><th>换卷单</th><th>满轴</th><th>空轴</th><th>原因</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section>
+    <h2>轴的来龙去脉</h2>
+    <label>轴号 <input id="traceId" placeholder="S-101"></label>
+    <button onclick="trace()">查询该轴时间线</button>
+    <pre id="timeline">输入轴号后查询</pre>
+  </section>
+
+  <section>
+    <h2>输出</h2>
+    <pre id="out">就绪（每 3 秒自动刷新排程状态）</pre>
+  </section>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const num = (id) => Number($(id).value);
+    const out = $("out");
+    const tag = (s) => `<span class="tag ${s}">${s}</span>`;
+
+    async function post(path, body) {
+      const response = await fetch(path, {method: "POST", body: JSON.stringify(body)});
+      const data = await response.json();
+      out.textContent = path + " -> " + response.status + "\n" + JSON.stringify(data, null, 2);
+      refresh();
+      return data;
+    }
+
+    const mount = () => post("/api/schedule/mount", {spool_id: $("spool").value, target_diameter: num("target")});
+    const enqueue = () => post("/api/schedule/enqueue", {spool_id: $("spool").value, target_diameter: num("target")});
+    const reading = () => post("/api/schedule/diameter", {spool_id: $("spool").value, diameter: num("diam")});
+    const requestChange = () => post("/api/schedule/request", {spool_id: $("spool").value, reason: "operator"});
+    const step = () => post("/api/schedule/step", {});
+    const breakNow = () => post("/api/schedule/break", {reason: "web break"});
+    const cancelActive = () => {
+      const id = window._activeId;
+      if (!id) { out.textContent = "当前没有进行中的换卷单"; return; }
+      post("/api/schedule/cancel", {change_id: id});
+    };
+    const cancelId = () => post("/api/schedule/cancel", {change_id: $("cancelId").value});
+    const startId = () => post("/api/schedule/start", {change_id: $("startId").value});
+    const setMode = (mode) => post("/api/schedule/mode", {mode});
+    const reorder = () => post("/api/schedule/reorder", {ordered_ids: $("order").value.split(",").map(s => s.trim()).filter(Boolean)});
+
+    async function trace() {
+      const id = $("traceId").value.trim();
+      const response = await fetch("/api/schedule/timeline?spool_id=" + encodeURIComponent(id));
+      const data = await response.json();
+      $("timeline").textContent = JSON.stringify(data.events, null, 2);
+    }
+
+    async function refresh() {
+      const response = await fetch("/api/schedule/state");
+      const state = await response.json();
+      const change = state.active_change || {};
+      window._activeId = change.change_id || "";
+      if (change.change_id) {
+        $("active").innerHTML =
+          `换卷单 <b>${change.change_id}</b> ${tag(change.status)} 步骤 <b>${change.stage}</b> ` +
+          `满轴 ${change.outgoing_id} → 空轴 ${change.incoming_id || "（缺轴）"} ` +
+          `原因 ${change.reason}`;
+        if (change.change_id && !$("cancelId").value) $("cancelId").value = change.change_id;
+        if (change.change_id && !$("startId").value) $("startId").value = change.change_id;
+      } else {
+        $("active").textContent = "无进行中的换卷单";
+      }
+      $("queue").querySelector("tbody").innerHTML = state.queue.map(
+        (s) => `<tr><td>${s.order + 1}</td><td>${s.spool_id}</td><td>${tag(s.status)}</td><td>${s.target_diameter}</td><td>${s.change_id || ""}</td></tr>`
+      ).join("") || `<tr><td colspan="5">暂无</td></tr>`;
+      $("pending").querySelector("tbody").innerHTML = state.pending_changes.map(
+        (c) => `<tr><td>${c.change_id}</td><td>${c.outgoing_id}</td><td>${c.incoming_id || "缺轴"}</td><td>${c.reason}</td></tr>`
+      ).join("") || `<tr><td colspan="4">暂无</td></tr>`;
+      document.title = `换卷排程 · ${state.mode}` + (state.incident.incident_id ? ` · 断纸${state.incident.incident_id}` : "");
+    }
+
+    refresh();
+    setInterval(refresh, 3000);
+  </script>
+</body>
+</html>
